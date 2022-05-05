@@ -19,7 +19,18 @@ set relativenumber
 set title
 set clipboard=unnamedplus
 set autochdir
+set formatoptions-=cro
+set updatetime=3000
+" set signcolumn=number
+
+
+
+" Folds
+set foldopen=search
+set foldopen+=jump
+nnoremap zz zzzO
 set foldenable
+set foldminlines=0
 
 set linebreak
 
@@ -40,7 +51,7 @@ let maplocalleader='\'
 
 " set rtp+=$HOME/.local/lib/python2.7/site-packages/powerline/bindings/vim/
 " Always show statusline
-set laststatus=2
+" set laststatus=2
   
 nnoremap # :w!<CR>
 nnoremap @ :q<CR>
@@ -48,14 +59,14 @@ nnoremap @ :q<CR>
 set t_Co=256
 
 "" Fixing deleting and cutting
-" backspace
-nnoremap <Del> "_d 
 " Make d map to the black hole
 noremap d "_d
 noremap dd "_dd
 noremap D "_D
 noremap x d
 noremap X D
+nnoremap <Del> "_d 
+vnoremap <Del> "_d 
 
 "" System and environment
 let &t_TI = ""
@@ -91,12 +102,16 @@ Plug 'junegunn/vim-easy-align'
 Plug 'junegunn/goyo.vim'
 Plug 'mhinz/vim-startify'
 Plug 'phaazon/hop.nvim'
-Plug 'dense-analysis/ale'
 Plug 'tpope/vim-abolish'
 Plug 'tpope/vim-obsession'
 "Plug 'tmhedberg/SimpylFold'
 " NOTE add: the ~/tmp folder
 Plug 'julienr/vim-cellmode'
+
+""" Checking/linting
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+" Plug 'dense-analysis/ale'
+
 """ Python
 Plug 'vim-scripts/indentpython.vim'
 Plug 'nvie/vim-flake8'
@@ -104,10 +119,11 @@ Plug 'preservim/nerdcommenter'
 Plug 'abarker/cyfolds'
 """ Cpp
 Plug 'bfrg/vim-cpp-modern'
-
+Plug 'jackguo380/vim-lsp-cxx-highlight'
 """ Tmux
 Plug 'christoomey/vim-tmux-navigator'
 Plug 'preservim/vimux'
+Plug 'edkolev/tmuxline.vim'
 
 """ YCM
 " Plug 'tabnine/YouCompleteMe.git'
@@ -127,11 +143,14 @@ Plug 'chrisbra/changesPlugin'
 """ Colors, highlights etc
 Plug 'agude/vim-eldar'
 Plug 'marko-cerovac/material.nvim'
+Plug 'jackguo380/vim-lsp-cxx-highlight'
 """ Bar/tabs
 "Plug 'kyazdani42/nvim-web-devicons'
 "Plug 'romgrk/barbar.nvim'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
+
+
 " Plug 'adelarsq/neoline.vim'
 """ Fonts/icons (should be last)
 Plug 'ryanoasis/vim-devicons'
@@ -193,18 +212,17 @@ endfunction
 
 
 let g:fzf_action = {
-            \ 'ctrl-o': 'tab split',
+            \ 'ctrl-s': 'tab split',
             \ 'left': 'split',
             \ 'right': 'vsplit'}
 
 """ Ale
-let b:ale_linters = ['flake8', 'pylint', 'cc', 'cpplint', 'cmakelint']
-"let g:ale_lint_on_insert_leave = 1
-let b:ale_fixers = ['autopep8', 'yapf']
+" let b:ale_linters = ['flake8', 'pylint', 'cc', 'cpplint', 'cmakelint']
+" let b:ale_fixers = ['autopep8', 'yapf']
 " Disable warnings about trailing whitespace for Python files.
-let b:ale_warn_about_trailing_whitespace = 0
-noremap <F8> :let g:ale_open_list = 1
-let g:ale_list_window_size = 5
+" let b:ale_warn_about_trailing_whitespace = 0
+" noremap <F8> :let g:ale_open_list = 1
+" let g:ale_list_window_size = 5
 
 """ Startify
 let g:startify_bookmarks = [ '.config/nvim/init.vim', '.config/i3/config', '~/.zshrc']
@@ -218,26 +236,77 @@ let b:cyfolds_suppress_insert_mode_switching='1'
 """ Restore view
 " set viewoptions=cursor,folds,slash,unix
 
+""" coc
+"Map enter to coc action
+nnoremap <CR> :CocAction<CR>
+
+inoremap <silent><expr> <c-space> coc#refresh()
+" GoTo code navigation.
+nmap <silent> gD <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gi <Plug>(coc-implementation)
+nmap <silent> gI <Plug>(coc-declaration)
+nmap <silent> gr <Plug>(coc-references)
+
+nmap <silent> ge <plug>(coc-diagnostic-next-error) 
+
+
+
+""" NERDCommenter
+
+
+
+""" Tmux
+
 "====[  Mappings due to keyboard layout  ]
 
 "" Basic qwerty to Colemak mappings
 nnoremap n h
 nnoremap e j
 nnoremap i k
-nnoremap o l
+""Go Right and open folds if you are on a fold
+"" Make a silent nnoremap for o
+
+"" Try to open fold if you are on a fold and catch if you are not
+function! OpenFoldOrRight()
+    try
+        execute "normal! zo"
+    catch
+        ""execute "normal! l"
+    finally
+        execute "normal! l"
+    endtry
+endfunction
+
+nnoremap <silent> o :call OpenFoldOrRight()<CR>
 
 nnoremap u i
 nnoremap U I
 
 noremap l u
 noremap L U
+
+
+noremap M N
 "" Strange mappings
 nnoremap % "
 nnoremap ^ %
 noremap ` o
+noremap — o<Esc>
 noremap – O
+noremap Ö O<Esc>
+
 " Repeat previous motion f/t motion
+
+
 noremap $ ;
+
+
+
+"===[ Mappings due to TMUX ]
+nnoremap <C-B> <C-O>zz
+nnoremap <C-K> <C-I>zz
+
 
 "====[  Navigation mappings  ]
 "" HOP
@@ -268,9 +337,13 @@ nnoremap Zt H
 nnoremap Zz M
 nnoremap Zb L
 
+"" Go to begining of line
+"" -> You never start motions with 0 or 1 jumps, do you?
+nnoremap 0 $
 nnoremap A ^
-nnoremap T $
 
+noremap { }
+noremap } {
 
 "" Words, characters, sentences and motions
 nnoremap G Gzz
@@ -281,7 +354,6 @@ nnoremap N B
 nnoremap " gE
 nnoremap ' E
 
-nnoremap 0 $
 
 "" Navigation within a file
 
@@ -297,8 +369,6 @@ nnoremap <Down> :wincmd j<CR>
 nnoremap <Home> gT
 nnoremap <End> gt
 
-" nnoremap N gT
-" nnoremap O gt
 
 
 " Depricated 13. April
@@ -416,16 +486,28 @@ highlight DiffText    cterm=bold ctermfg=magenta   ctermbg=black
 "====[  Esthetics, formating and visual mappings  ]
 "" Airline
 let g:airline#extensions#tabline#enabled = 1
-let g:airline_section_y = 0 
+" let g:airline_section_x = 0
+let g:airline_section_y = 0
+" let g:airline_section_z = 0
 let g:airline_section_z = '%t'
-let g:airline_section_warning = 0
+" let g:airline_section_warning = 0
 let g:airline_powerline_fonts = 1
 
+let g:airline#extensions#default#layout = [
+    \ [ 'a', 'b', 'c' ],
+    \ [ 'x', 'error']
+    \ ]
+
+
+let g:airline#extensions#coc#enabled = 1
 "" Folds
 "Colemak
 nnoremap ze zj 
 nnoremap zi zk
 nnoremap zE zi
+nnoremap <leader>o zO
+nnoremap <leader>n zC
+
 "Personal preference due to position
 noremap m n  
 onoremap M N
@@ -439,10 +521,15 @@ let g:goyo_height = 90
 let g:material_style = "deep ocean"
 colorscheme material
 
+
 "====[  Language specific mappings ]
 "" CPP
 autocmd Syntax c,cpp normal zR
 autocmd Syntax c,cpp setlocal foldmethod=indent
+" c++ syntax highlighting
+let g:cpp_class_scope_highlight = 1
+let g:cpp_member_variable_highlight = 1
+let g:cpp_class_decl_highlight = 1
 
 """ Plugin dependent settings
 let g:ale_c_clangformat_style_option = 'Google'
@@ -800,3 +887,8 @@ endfunction
 " C     R    <      >     foldlevel as computed for next line: -1
 " S     R    <      *     compute foldlevel the hard way: use function
 " C     R    <      <     foldlevel as computed for this line: use function
+
+
+
+"====[ Lua ] 
+
