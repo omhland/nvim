@@ -7,40 +7,44 @@ cd ~/.config/nvim
 if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
   let s:wipebuf = bufnr('%')
 endif
-set shortmess=aoO
+let s:shortmess_save = &shortmess
+if &shortmess =~ 'A'
+  set shortmess=aoOA
+else
+  set shortmess=aoO
+endif
+badd +1 ~/.local/share/nvim/plugged/vim-wordmotion/doc/wordmotion.txt
+badd +300 ~/.config/nvim/init.vim
 argglobal
 %argdel
 $argadd init.vim
-edit ~/.config/nvim/init.vim
+edit ~/.local/share/nvim/plugged/vim-wordmotion/doc/wordmotion.txt
 argglobal
-setlocal fdm=expr
-setlocal fde=VimFolds(v:lnum)
+balt ~/.config/nvim/init.vim
+setlocal fdm=manual
+setlocal fde=0
 setlocal fmr={{{,}}}
 setlocal fdi=#
-setlocal fdl=0
-setlocal fml=1
+setlocal fdl=2
+setlocal fml=2
 setlocal fdn=20
-setlocal fen
-308
-normal! zo
-309
-normal! zo
-309
-normal! zo
-let s:l = 312 - ((311 * winheight(0) + 32) / 64)
+setlocal nofen
+silent! normal! zE
+let &fdl = &fdl
+let s:l = 15 - ((12 * winheight(0) + 24) / 49)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 312
-normal! 014|
-lcd ~/.config/nvim
+keepjumps 15
+normal! 05|
+lcd ~/.local/share/nvim/plugged/vim-wordmotion/doc
 tabnext 1
-badd +0 ~/.config/nvim/init.vim
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf
 endif
 unlet! s:wipebuf
-set winheight=1 winwidth=20 shortmess=filnxtToOFI
+set winheight=1 winwidth=20
+let &shortmess = s:shortmess_save
 let s:sx = expand("<sfile>:p:r")."x.vim"
 if filereadable(s:sx)
   exe "source " . fnameescape(s:sx)

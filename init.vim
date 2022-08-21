@@ -1,6 +1,7 @@
 "====[  TODO  ]
 " set up easyallign
 " show marks -> should be much faster now
+" set up vim commentary
 " TESTS
 " All plugins 
 "" Suggestions
@@ -10,7 +11,6 @@
 
 "Zt
 "Zb
-
 
 
 "====[  Preferences  ]
@@ -24,13 +24,13 @@ set updatetime=3000
 " set signcolumn=number
 
 
-
 " Folds
 set foldopen=search
 set foldopen+=jump
-nnoremap zz zzzO
+" nnoremap zz zzzO
 set foldenable
-set foldminlines=0
+set foldminlines=2
+set foldlevelstart=2
 
 set linebreak
 
@@ -48,6 +48,8 @@ filetype plugin on
 nnoremap <SPACE> <Nop>
 let mapleader = " "
 let maplocalleader='\' 
+
+
 
 " set rtp+=$HOME/.local/lib/python2.7/site-packages/powerline/bindings/vim/
 " Always show statusline
@@ -84,11 +86,9 @@ set smarttab       "Use shiftwidths at left margin, tabstops everywhere else
 set incsearch       "Lookahead as search pattern is specified
 set ignorecase      "Ignore case in all searches...
 set smartcase       " ...unless uppercase letters used
-
 set hlsearch
-highlight clear Search
-highlight       Search    ctermfg=White  ctermbg=Black  cterm=bold
-highlight    IncSearch    ctermfg=Black  ctermbg=White    cterm=bold
+
+
 
 """ Saving, exiting & reloading
 noremap <leader>sv :source $MYVIMRC<CR>
@@ -104,13 +104,16 @@ Plug 'mhinz/vim-startify'
 Plug 'phaazon/hop.nvim'
 Plug 'tpope/vim-abolish'
 Plug 'tpope/vim-obsession'
-"Plug 'tmhedberg/SimpylFold'
+Plug 'chaoren/vim-wordmotion'
 " NOTE add: the ~/tmp folder
 Plug 'julienr/vim-cellmode'
 
 """ Checking/linting
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " Plug 'dense-analysis/ale'
+"
+Plug 'tpope/vim-commentary'
+Plug 'neovim/nvim-lspconfig'
 
 """ Python
 Plug 'vim-scripts/indentpython.vim'
@@ -120,6 +123,8 @@ Plug 'abarker/cyfolds'
 """ Cpp
 Plug 'bfrg/vim-cpp-modern'
 Plug 'jackguo380/vim-lsp-cxx-highlight'
+Plug 'rhysd/vim-clang-format'
+
 """ Tmux
 Plug 'christoomey/vim-tmux-navigator'
 Plug 'preservim/vimux'
@@ -144,6 +149,13 @@ Plug 'chrisbra/changesPlugin'
 Plug 'agude/vim-eldar'
 Plug 'marko-cerovac/material.nvim'
 Plug 'jackguo380/vim-lsp-cxx-highlight'
+
+""" Refactoring
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+Plug 'nvim-lua/plenary.nvim'
+Plug 'ThePrimeagen/refactoring.nvim'
+
+
 """ Bar/tabs
 "Plug 'kyazdani42/nvim-web-devicons'
 "Plug 'romgrk/barbar.nvim'
@@ -157,7 +169,6 @@ Plug 'ryanoasis/vim-devicons'
 
 call plug#end()
 
-
 "" Plugin setup
 ""NOTE: Not all plugins are configured here
 """ Copilot
@@ -168,6 +179,8 @@ imap <silent><C-Right> <Plug>(copilot-next)
 let g:copilot_enabled = v:true
 
 let g:copilot_no_tab_map = v:true
+
+let g:copilot_node_command = "/home/ole/.nvm/versions/node/v16.15.0/bin/node"
 
 """ Nerdcommenter
 map åå <plug>NERDCommenterInvert
@@ -210,11 +223,12 @@ endfunction
 
 "autocmd! User FzfStatusLine call <SID>fzf_statusline()
 
-
-let g:fzf_action = {
-            \ 'ctrl-s': 'tab split',
+let g:fzf_action = { 
+            \ 'end': 'tab split',
             \ 'left': 'split',
             \ 'right': 'vsplit'}
+
+let $FZF_DEFAULT_OPTS = '--bind ctrl-a:select-all'
 
 """ Ale
 " let b:ale_linters = ['flake8', 'pylint', 'cc', 'cpplint', 'cmakelint']
@@ -225,7 +239,20 @@ let g:fzf_action = {
 " let g:ale_list_window_size = 5
 
 """ Startify
-let g:startify_bookmarks = [ '.config/nvim/init.vim', '.config/i3/config', '~/.zshrc']
+let g:startify_bookmarks = [ 
+    \'~/.config/nvim/init.vim', 
+    \'~/.config/i3/config', 
+    \'~/.zshrc',
+    \'~/.config/attentionPath/config',
+    \'~/.tmux.conf']
+
+
+let g:startify_lists = [
+        \ { 'type': 'bookmarks', 'header': ['   Bookmarks']      },
+        \ { 'type': 'dir',       'header': ['   MRU '. getcwd()] },
+        \ ]
+
+
 
 """ Vimux
 let g:cellmode_use_tmux=1
@@ -233,12 +260,18 @@ let g:cellmode_use_tmux=1
 """ vim-cellmode
 let g:cellmode_tmux_panenumber='1'
 let b:cyfolds_suppress_insert_mode_switching='1'
+
+
+vmap <silent> <C-c> :call RunTmuxPythonChunk()<CR>
+noremap <silent> <C-B> :call RunTmuxPythonCell(0)<CR>
+noremap <silent> <C-g> :call RunTmuxPythonCell(1)<CR>
+
 """ Restore view
-" set viewoptions=cursor,folds,slash,unix
+set viewoptions=cursor,folds,slash,unix
 
 """ coc
 "Map enter to coc action
-nnoremap <CR> :CocAction<CR>
+nnoremap <CR>c :CocAction<CR> 
 
 inoremap <silent><expr> <c-space> coc#refresh()
 " GoTo code navigation.
@@ -252,9 +285,29 @@ nmap <silent> ge <plug>(coc-diagnostic-next-error)
 
 
 
+
+""" Refactoring
+" Remaps for the refactoring operations currently offered by the plugin
+lua require('refactoring').setup({})
+lua vim.api.nvim_set_keymap("v", "<leader>re", [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Function')<CR>]], {noremap = true, silent = true, expr = false})
+lua vim.api.nvim_set_keymap("v", "<leader>rf", [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Function To File')<CR>]], {noremap = true, silent = true, expr = false})
+lua vim.api.nvim_set_keymap("v", "<leader>rv", [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Variable')<CR>]], {noremap = true, silent = true, expr = false})
+lua vim.api.nvim_set_keymap("v", "<leader>ri", [[ <Esc><Cmd>lua require('refactoring').refactor('Inline Variable')<CR>]], {noremap = true, silent = true, expr = false})
+
+
+""" lsp-config (Grammarly) 
+
+" lua require'lspconfig'.grammarly.setup{}
+nnoremap <CR><SPACE> :lua vim.lsp.buf.code_action()<CR>1<CR><CR>
+
+
 """ NERDCommenter
 
 
+
+""" vim-wordmotion
+
+let g:wordmotion_mappings = {"e":"'", 'ge':'"'} 
 
 """ Tmux
 
@@ -303,12 +356,15 @@ noremap $ ;
 
 
 
-"===[ Mappings due to TMUX ]
-nnoremap <C-B> <C-O>zz
-nnoremap <C-K> <C-I>zz
-
-
 "====[  Navigation mappings  ]
+
+"===[ Mappings due to TMUX ]
+" unmap <C-B>
+" nnoremap <C-B> <C-O>zz
+" nnoremap <C-K> <C-I>zz
+
+" Square brackets are more usefull than parenthesis, but harder to reach
+
 "" HOP
 lua require'hop'.setup { keys = 'tnesiroalpmvufwxqz', jump_on_sole_occurrence = true }
 
@@ -351,14 +407,14 @@ nnoremap G Gzz
 " Top layear
 nnoremap O W
 nnoremap N B
-nnoremap " gE
-nnoremap ' E
+" nnoremap " gE
+" nnoremap ' E
 
 
 "" Navigation within a file
 
-nnoremap <C-i> <C-u>
-nnoremap <C-e> <C-d>
+" nnoremap <C-i> <C-u>
+" nnoremap <C-e> <C-d> TODO
 
 "" Window and tab navigation
 nnoremap <Right> :wincmd l<CR>
@@ -369,8 +425,6 @@ nnoremap <Down> :wincmd j<CR>
 nnoremap <Home> gT
 nnoremap <End> gt
 
-
-
 " Depricated 13. April
 " nnoremap <Right> gt
 " nnoremap <Left> gT
@@ -379,6 +433,11 @@ nnoremap <End> gt
 nnoremap <Leader>t :tabnew<CR>
 
 "====[ Formatting ]
+    
+"" View adjustment
+
+nnoremap <silent> z" :execute "normal [zzt<C-o>"<CR>
+
 """ Windows
 
 nnoremap Ð <C-w>_ 
@@ -522,6 +581,17 @@ let g:material_style = "deep ocean"
 colorscheme material
 
 
+"" Highlighting
+
+" Highlight releative numbers as white
+" highlight clear LineNr
+hi LineNr guifg=white
+
+
+highlight clear Search
+highlight       Search    ctermfg=White  ctermbg=Black  cterm=bold
+highlight    IncSearch    ctermfg=Black  ctermbg=White    cterm=bold
+
 "====[  Language specific mappings ]
 "" CPP
 autocmd Syntax c,cpp normal zR
@@ -530,6 +600,9 @@ autocmd Syntax c,cpp setlocal foldmethod=indent
 let g:cpp_class_scope_highlight = 1
 let g:cpp_member_variable_highlight = 1
 let g:cpp_class_decl_highlight = 1
+
+nnoremap <Leader>f :<C-u>ClangFormat<CR>
+
 
 """ Plugin dependent settings
 let g:ale_c_clangformat_style_option = 'Google'
@@ -546,6 +619,12 @@ au BufNewFile,BufRead *.py
     \ set autoindent |
     \ set fileformat=unix |
     \ set foldlevel=0
+
+au BufNewFile,BufRead *.py
+    \ nnoremap <SPACE>I ofrom IPython import embed as e<ESC> |
+    \ nnoremap <SPACE>i oe()<ESC>
+
+
 
 """ Plugin dependent settings
 let python_highlight_all=1
@@ -580,6 +659,7 @@ function! MarkdownLevel()
 endfunction
 au BufEnter *.md setlocal foldexpr=MarkdownLevel()  
 au BufEnter *.md setlocal foldmethod=expr
+au BufEnter *.md set foldlevelstart=2
 
 "====[  Vim script functions  ]
 "" Autofolding
@@ -887,6 +967,7 @@ endfunction
 " C     R    <      >     foldlevel as computed for next line: -1
 " S     R    <      *     compute foldlevel the hard way: use function
 " C     R    <      <     foldlevel as computed for this line: use function
+
 
 
 

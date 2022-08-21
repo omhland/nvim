@@ -13,5 +13,77 @@
 ],
 "coc.source.buffer.disableSyntaxes": [
     "comment"
-]
+],
+"diagnostic.checkCurrentLine": true,
+"jedi.enable": true,
+"jedi.startupMessage": false,
+"jedi.workspace.symbols.ignoreFolders": [
+    ".nox",
+    ".tox",
+    ".venv",
+    "__pycache__",
+    "venv"
+],
+"jedi.hover.enable": true,
+"jedi.executable.command": "usr/bin/python3",
+"diagnostic-languageserver.filetypes": {
+  "python": ["pylint", "flake8"]
+},
+"diagnostic-languageserver.linters": {
+  "pylint": {
+    "sourceName": "pylint",
+    "command": "pylint",
+    "debounce": 100,
+    "args": [
+      "--output-format",
+      "text",
+      "--score",
+      "no",
+      "--msg-template",
+      "'{line}:{column}:{category}:{msg} ({msg_id}:{symbol})'",
+      "%file"
+    ],
+    "formatPattern": [
+      "^(\\d+?):(\\d+?):([a-z]+?):(.*)$",
+      {
+        "line": 1,
+        "column": 2,
+        "endColumn": 2,
+        "security": 3,
+        "message": 4
+      }
+    ],
+    "rootPatterns": ["pyproject.toml", "setup.py", ".git"],
+    "securities": {
+      "informational": "hint",
+      "refactor": "info",
+      "convention": "info",
+      "warning": "warning",
+      "error": "error",
+      "fatal": "error"
+    },
+    "offsetColumn": 1,
+    "offsetColumnEnd": 1,
+    "formatLines": 1
+  }
+},
+  "languageserver": {
+    "ccls": {
+      "command": "ccls",
+      "args": ["--log-file=/tmp/ccls.log", "-v=1"],
+      "filetypes": ["c", "cc", "cpp", "c++", "objc", "objcpp"],
+      "rootPatterns": [".ccls", "compile_commands.json"],
+      "initializationOptions": {
+         "cache": {
+           "directory": "/tmp/ccls"
+         },
+         "client": {
+          "snippetSupport": true
+         },
+         "highlight": {
+           "lsRanges": true
+         }
+       }
+    }
+  }
 }
